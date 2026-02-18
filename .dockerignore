@@ -1,0 +1,15 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+.env
+.env.*
+*.session
+data/
+.vscode/
+.idea/
+*.md
+.DS_Store
+.pre-commit-config.yaml
+migrate_duckdb_to_sqlite.py

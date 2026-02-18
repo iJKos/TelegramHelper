@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: telegram-helper
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./session.session:/app/session.session
+    env_file:
+      - .env
+    environment:
+      - TGHELPER_DUCKDB_PATH=/app/data/main

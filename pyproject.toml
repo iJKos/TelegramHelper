@@ -1,0 +1,84 @@
+[project]
+name = "telegram-helper"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "telethon",
+    "openai",
+    "httpx",
+    "beautifulsoup4",
+    "fastapi",
+    "duckdb",
+    "uvicorn",
+    "python-dotenv",
+    "jinja2",
+    "scikit-learn",
+    "sentence-transformers",
+    "joblib",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [
+  ".git",
+  "venv",
+  ".venv",
+  "*/__init__.py"
+]
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+# TODO: enable all checks (except COM812)
+select = [
+    "E",     # pycodestyle (errors)
+    "F",     # pyflakes
+    "W",     # pycodestyle (warnings) e.g. trailing/leading whitespaces
+    "Q",     # quotes
+    "I001",  # unsorted imports (isort)
+    # "TID",   # tidy-imports
+    # "COM812" # trailing comma  # needed for refactoring
+]
+# TODO: remove all ignores
+ignore = [
+    "F841", # Unused variable
+    "F401", # Unused import
+    "F405", # May be undefined
+    "F403", # Unable to detect undefined names, star imports
+    "F821", # Undefined name
+    "F822", # Undefined name in __all__
+    "E501", # Line too long
+    "E731", # Do not assign a `lambda` expression, use a `def`
+]
+
+# [tool.ruff.lint.flake8-tidy-imports]
+# ban-relative-imports = "all"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 7
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+
+[tool.ruff.lint.isort]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "airflow",
+    "first-party",
+    "local-folder",
+]
+
+[tool.ruff.lint.isort.sections]
+# Group all airflow imports into a separate section.
+"airflow" = ["airflow"]
+
+[tool.ruff.format]
+quote-style = "single"
+docstring-code-format = true
+

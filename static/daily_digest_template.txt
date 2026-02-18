@@ -1,0 +1,13 @@
+📊 <b>Топ новостей за {{date}}</b>
+
+{% for item in items %}
+{{item.number}}. <a href="{{item.link}}">{{item.headline}}</a>
+    🏷️ {% if item.tags %} {{item.tags}}{% endif %}{% if item.author %}
+    ✍️ by <a href="{{item.author_link}}">{{item.author}}</a>{% endif %} {{item.emodji}}
+{% endfor %}
+
+<b>Настройка ленты:</b>
+🔥+10 ❤️+5 👍+1 👎-1 💩-5 🤮-10
+
+<a href="https://t.me/moderndatastack_en">🇬🇧</a>  <a href="https://t.me/moderndatastack_ru">🇷🇺</a>  <a href="https://t.me/datacoffee">☕️</a>  <a href="https://datacoffee.link/"> 🌐</a>  <a href="https://ijkos.com/"> 💷</a> 
+

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sent Messages</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e4e4e4;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #fff;
+            font-weight: 300;
+            font-size: 2rem;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px 25px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #4fc3f7;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 5px;
+        }
+        .message-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .message-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(79, 195, 247, 0.3);
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 15px;
+        }
+        .message-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4fc3f7;
+            min-width: 40px;
+        }
+        .message-rank.top-3 {
+            color: #ffd700;
+        }
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .emodji-count {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 107, 107, 0.15);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #ff6b6b;
+        }
+        .emodji-count svg {
+            width: 16px;
+            height: 16px;
+        }
+        .normalized-score {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(76, 175, 80, 0.15);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #81c784;
+            font-size: 0.9rem;
+        }
+        .message-date {
+            color: #888;
+            font-size: 0.85rem;
+        }
+        .message-state {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .message-state.sent {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+        .message-state.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #e57373;
+        }
+        .message-state.to_send {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffd54f;
+        }
+        .message-text {
+            color: #ccc;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.95rem;
+            max-height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+        .message-text a {
+            color: #7dd3fc;
+            text-decoration: none;
+        }
+        .message-text a:hover {
+            color: #bae6fd;
+            text-decoration: underline;
+        }
+        .message-text.expanded {
+            max-height: none;
+        }
+        .message-text:not(.expanded)::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(transparent, rgba(26, 26, 46, 0.95));
+        }
+        .expand-btn {
+            background: none;
+            border: none;
+            color: #4fc3f7;
+            cursor: pointer;
+            padding: 8px 0;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .expand-btn.visible {
+            display: block;
+        }
+        .message-link {
+            margin-top: 12px;
+        }
+        .message-link a {
+            color: #4fc3f7;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .message-link a:hover {
+            text-decoration: underline;
+        }
+        .no-messages {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        @media (max-width: 600px) {
+            .message-header {
+                flex-direction: column;
+            }
+            .stats {
+                gap: 15px;
+            }
+            .stat-card {
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sent Messages</h1>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_count }}</div>
+                <div class="stat-label">Total Messages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_emodji }}</div>
+                <div class="stat-label">Total Reactions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ avg_normalized }}</div>
+                <div class="stat-label">Avg Score</div>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="message-list">
+            {% for msg in messages %}
+            <div class="message-card">
+                <div class="message-header">
+                    <span class="message-rank {% if loop.index <= 3 %}top-3{% endif %}">#{{ loop.index }}</span>
+                    <div class="message-meta">
+                        <span class="normalized-score" title="Normalized: (reactions / subscribers) × 100">{{ msg.normalized_score }}</span>
+                        <span class="emodji-count">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            {{ msg.emodji_count }}
+                        </span>
+                        <span class="message-date">{{ msg.sent_at_formatted }}</span>
+                        <span class="message-state {{ msg.state }}">{{ msg.state }}</span>
+                    </div>
+                </div>
+                <div class="message-text" id="text-{{ loop.index }}">{{ msg.text_preview | safe }}</div>
+                <button class="expand-btn" id="btn-{{ loop.index }}" onclick="toggleExpand({{ loop.index }})">Show more</button>
+                {% if msg.telegram_id %}
+                <div class="message-link">
+                    <a href="https://t.me/{{ msg.channel_link }}/{{ msg.telegram_id }}" target="_blank">Open in Telegram &rarr;</a>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-messages">No messages found</div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.message-text').forEach(function(el, idx) {
+                if (el.scrollHeight > 200) {
+                    document.getElementById('btn-' + (idx + 1)).classList.add('visible');
+                }
+            });
+        });
+
+        function toggleExpand(idx) {
+            var text = document.getElementById('text-' + idx);
+            var btn = document.getElementById('btn-' + idx);
+            if (text.classList.contains('expanded')) {
+                text.classList.remove('expanded');
+                btn.textContent = 'Show more';
+            } else {
+                text.classList.add('expanded');
+                btn.textContent = 'Show less';
+            }
+        }
+    </script>
+</body>
+</html>

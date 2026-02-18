@@ -1,0 +1,9 @@
+<b><a href="{{ public_link }}">{{ summary_date }}: {{ headline }}</a></b>
+
+{{ summary }}
+
+{{ urls_block }}
+<i>✍️ by {% for src in sources %}<a href="{{ src.link }}">{{ src.author }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</i>
+
+{{ hashtags_block }}
+<a href="https://t.me/moderndatastack_en">🇬🇧</a>  <a href="https://t.me/moderndatastack_ru">🇷🇺</a>  <a href="https://t.me/datacoffee">☕️</a>  <a href="https://datacoffee.link/"> 🌐</a>  <a href="https://ijkos.com/"> 💷</a> 

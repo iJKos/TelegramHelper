@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e4e4e4;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+            font-weight: 300;
+            font-size: 2rem;
+        }
+
+        /* Filters Section */
+        .filters {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            cursor: pointer;
+            user-select: none;
+            color: #888;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .filters-header:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .filters-toggle {
+            transition: transform 0.3s;
+        }
+        .filters.collapsed .filters-toggle {
+            transform: rotate(-90deg);
+        }
+        .filters-content {
+            padding: 0 20px 20px 20px;
+            transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+            max-height: 1000px;
+            opacity: 1;
+        }
+        .filters.collapsed .filters-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .filters-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .filter-group input[type="date"],
+        .filter-group select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .filter-group input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        /* Tags Section */
+        .tags-section {
+            margin-top: 15px;
+        }
+        .tags-section label {
+            font-size: 0.85rem;
+            color: #888;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tag-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ccc;
+        }
+        .tag-chip:hover {
+            border-color: rgba(79, 195, 247, 0.5);
+        }
+        .tag-chip.excluded {
+            background: rgba(244, 67, 54, 0.3);
+            border-color: rgba(244, 67, 54, 0.5);
+            color: #e57373;
+            text-decoration: line-through;
+        }
+
+        /* Sort Buttons */
+        .sort-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .sort-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .sort-btn:hover {
+            border-color: rgba(79, 195, 247, 0.5);
+        }
+        .sort-btn.active {
+            background: rgba(79, 195, 247, 0.2);
+            border-color: rgba(79, 195, 247, 0.5);
+            color: #4fc3f7;
+        }
+        .sort-btn .arrow {
+            margin-left: 5px;
+        }
+
+        /* Top Bar - Stats + On Air + Cron */
+        .top-bar {
+            display: flex;
+            align-items: stretch;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.85rem;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .stat-label {
+            color: #888;
+        }
+        .stat-value {
+            font-weight: 600;
+            color: #4fc3f7;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Message List */
+        .message-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .message-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(79, 195, 247, 0.3);
+        }
+        .message-card.discussed {
+            background: rgba(244, 67, 54, 0.08);
+            border-color: rgba(244, 67, 54, 0.2);
+        }
+        .message-card.discussed:hover {
+            border-color: rgba(244, 67, 54, 0.4);
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 15px;
+        }
+        .message-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4fc3f7;
+            min-width: 40px;
+        }
+        .message-rank.top-3 {
+            color: #ffd700;
+        }
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .emodji-count {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 107, 107, 0.15);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #ff6b6b;
+        }
+        .emodji-count svg {
+            width: 16px;
+            height: 16px;
+        }
+        .normalized-score {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(76, 175, 80, 0.15);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #81c784;
+            font-size: 0.9rem;
+        }
+        .message-date {
+            color: #888;
+            font-size: 0.85rem;
+        }
+        .message-date.sent {
+            color: #666;
+            font-style: italic;
+        }
+        .message-date::before {
+            content: '📅 ';
+        }
+        .message-date.sent::before {
+            content: '📤 ';
+        }
+        .message-state {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .message-state.sent {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+        .message-state.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #e57373;
+        }
+        .message-state.to_send {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffd54f;
+        }
+        .message-state.no_send {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+        }
+        .message-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .message-tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(79, 195, 247, 0.15);
+            color: #4fc3f7;
+        }
+        .message-text {
+            color: #ccc;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.95rem;
+            max-height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+        .message-text a {
+            color: #7dd3fc;
+            text-decoration: none;
+        }
+        .message-text a:hover {
+            color: #bae6fd;
+            text-decoration: underline;
+        }
+        .message-text.expanded {
+            max-height: none;
+        }
+        .message-text:not(.expanded)::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(transparent, rgba(26, 26, 46, 0.95));
+        }
+        .expand-btn {
+            background: none;
+            border: none;
+            color: #4fc3f7;
+            cursor: pointer;
+            padding: 8px 0;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .expand-btn.visible {
+            display: block;
+        }
+        .message-footer {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 12px;
+        }
+        .message-link {
+            color: #4fc3f7;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .message-link:hover {
+            text-decoration: underline;
+        }
+        .no-messages {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        /* On Air Button */
+        .on-air-btn {
+            flex: 1;
+            min-width: 0;
+            padding: 15px 20px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .on-air-btn:hover {
+            border-color: rgba(244, 67, 54, 0.5);
+            color: #e57373;
+        }
+        .on-air-btn.active {
+            background: rgba(244, 67, 54, 0.3);
+            border-color: #f44336;
+            color: #fff;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(244, 67, 54, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(244, 67, 54, 0.8); }
+        }
+
+        /* Discussed Button */
+        .discussed-btn {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin-top: 15px;
+            border: 2px solid rgba(76, 175, 80, 0.5);
+            border-radius: 10px;
+            background: rgba(76, 175, 80, 0.15);
+            color: #81c784;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .discussed-btn:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4caf50;
+        }
+        .discussed-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .discussed-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(244, 67, 54, 0.2);
+            color: #e57373;
+            font-size: 0.75rem;
+            margin-left: 10px;
+        }
+
+        .bot-reaction {
+            font-size: 1.1rem;
+            margin-left: 5px;
+            cursor: default;
+        }
+        .ml-score {
+            font-size: 0.75rem;
+            color: #90a4ae;
+            margin-left: 5px;
+        }
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .pagination button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            min-width: 36px;
+        }
+        .pagination button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .pagination button.active {
+            background: #4fc3f7;
+            color: #1a1a2e;
+            font-weight: 600;
+            border-color: #4fc3f7;
+        }
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+        .pagination .page-info {
+            color: #888;
+            font-size: 0.8rem;
+            margin: 0 8px;
+        }
+
+        /* Refresh controls */
+        .refresh-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+        .refresh-controls label {
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .refresh-controls input[type="number"] {
+            width: 60px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.85rem;
+        }
+        .refresh-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(79, 195, 247, 0.5);
+            background: rgba(79, 195, 247, 0.15);
+            color: #4fc3f7;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover {
+            background: rgba(79, 195, 247, 0.3);
+        }
+        .download-db-link {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            background: rgba(255, 193, 7, 0.15);
+            color: #ffd54f;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .download-db-link:hover {
+            background: rgba(255, 193, 7, 0.3);
+        }
+
+        /* Checkbox filter */
+        .checkbox-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkbox-filter input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .checkbox-filter label {
+            cursor: pointer;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        /* View toggle button */
+        .view-toggle-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .view-toggle-btn:hover {
+            border-color: rgba(79, 195, 247, 0.5);
+        }
+        .view-toggle-btn.active {
+            background: rgba(79, 195, 247, 0.2);
+            border-color: rgba(79, 195, 247, 0.5);
+            color: #4fc3f7;
+        }
+
+        /* Table View */
+        .messages-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .messages-table th,
+        .messages-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .messages-table td.compact {
+            padding: 8px 6px;
+            white-space: nowrap;
+        }
+        .messages-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .messages-table tr:hover {
+            background: rgba(79, 195, 247, 0.05);
+        }
+        .messages-table tr.discussed {
+            background: rgba(244, 67, 54, 0.08);
+        }
+        .messages-table tr.discussed:hover {
+            background: rgba(244, 67, 54, 0.12);
+        }
+        .messages-table .rank {
+            font-weight: 700;
+            color: #4fc3f7;
+        }
+        .messages-table .rank.top-3 {
+            color: #ffd700;
+        }
+        .messages-table .score {
+            color: #81c784;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .messages-table .reactions {
+            color: #ff6b6b;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .messages-table .state {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .messages-table .state.sent {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+        .messages-table .state.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #e57373;
+        }
+        .messages-table .state.to_send {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffd54f;
+        }
+        .messages-table .state.no_send {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+        }
+        .messages-table .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            max-width: 150px;
+        }
+        .messages-table .tag {
+            font-size: 0.65rem;
+            padding: 1px 5px;
+            border-radius: 6px;
+            background: rgba(79, 195, 247, 0.15);
+            color: #4fc3f7;
+        }
+        .messages-table .discussed-btn-small {
+            padding: 6px 12px;
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 6px;
+            background: rgba(76, 175, 80, 0.15);
+            color: #81c784;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .messages-table .discussed-btn-small:hover {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        .messages-table .discussed-btn-small:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .messages-table .link {
+            color: #4fc3f7;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+        .messages-table .link:hover {
+            text-decoration: underline;
+        }
+        .messages-table .headline {
+            max-width: 500px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .messages-table .expand-text-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid rgba(79, 195, 247, 0.5);
+            background: rgba(79, 195, 247, 0.15);
+            color: #4fc3f7;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .messages-table .expand-text-btn:hover {
+            background: rgba(79, 195, 247, 0.3);
+        }
+        .messages-table .expand-text-btn.expanded {
+            background: rgba(79, 195, 247, 0.3);
+        }
+        .messages-table .text-row {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .messages-table .text-row.hidden {
+            display: none;
+        }
+        .messages-table .table-text-content {
+            padding: 10px;
+            color: #ccc;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.9rem;
+        }
+        .messages-table .table-text-content a {
+            color: #7dd3fc;
+            text-decoration: none;
+        }
+        .messages-table .table-text-content a:hover {
+            text-decoration: underline;
+        }
+
+        /* View toggle container */
+        .view-toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        /* Cron status card */
+        .cron-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 10px 15px;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .cron-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .cron-card-title {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .cron-status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+        }
+        .cron-status-indicator.running {
+            background: #4caf50;
+            animation: cron-pulse 1.5s infinite;
+        }
+        @keyframes cron-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .cron-info {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+        .cron-info-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 2px;
+        }
+        .cron-info-label {
+            color: #888;
+        }
+        .cron-info-value {
+            color: #ccc;
+        }
+        .cron-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .cron-interval-input {
+            width: 40px;
+            padding: 3px 5px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.75rem;
+        }
+        .cron-btn {
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .cron-btn.start {
+            background: rgba(76, 175, 80, 0.3);
+            color: #81c784;
+        }
+        .cron-btn.start:hover {
+            background: rgba(76, 175, 80, 0.5);
+        }
+        .cron-btn.stop {
+            background: rgba(244, 67, 54, 0.3);
+            color: #e57373;
+        }
+        .cron-btn.stop:hover {
+            background: rgba(244, 67, 54, 0.5);
+        }
+        .cron-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .cron-min-label {
+            color: #888;
+            font-size: 0.7rem;
+        }
+
+        @media (max-width: 600px) {
+            .top-bar {
+                flex-direction: column;
+            }
+            .message-header {
+                flex-direction: column;
+            }
+            .filters-row {
+                flex-direction: column;
+            }
+            .on-air-btn {
+                font-size: 1.2rem;
+                padding: 15px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-bar">
+            <button class="on-air-btn" id="onAirBtn">ON AIR</button>
+            <div class="cron-card">
+                <div class="cron-card-header">
+                    <span class="cron-card-title">Cron</span>
+                    <span class="cron-status-indicator" id="cronIndicator"></span>
+                </div>
+                <div class="cron-info" id="cronInfo">
+                    <div class="cron-info-row">
+                        <span class="cron-info-label">Last run:</span>
+                        <span class="cron-info-value" id="cronLastRun">-</span>
+                    </div>
+                    <div class="cron-info-row">
+                        <span class="cron-info-label">Funnel:</span>
+                        <span class="cron-info-value" id="cronFunnel">- / - / -</span>
+                    </div>
+                    <div class="cron-info-row">
+                        <span class="cron-info-label">Step:</span>
+                        <span class="cron-info-value" id="cronStep">Idle</span>
+                    </div>
+                </div>
+                <div class="cron-controls">
+                    <input type="number" class="cron-interval-input" id="cronIntervalInput" value="30" min="1" max="120" title="Interval in minutes">
+                    <span class="cron-min-label">min</span>
+                    <button class="cron-btn start" id="cronStartBtn" onclick="startCron()">Start</button>
+                    <button class="cron-btn stop" id="cronStopBtn" onclick="stopCron()" disabled>Stop</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="filters collapsed">
+            <div class="filters-header" id="filtersHeader">
+                <span>Filters</span>
+                <span class="filters-toggle">▼</span>
+            </div>
+            <div class="filters-content" id="filtersContent">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input type="date" id="fromDate">
+                </div>
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input type="date" id="toDate">
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select id="status">
+                        <option value="">All</option>
+                        <option value="sent" selected>Sent</option>
+                        <option value="to_send">To Send</option>
+                        <option value="new">New</option>
+                        <option value="to_update">To Update</option>
+                        <option value="no_send">No Send</option>
+                        <option value="low_score">Low Score</option>
+                        <option value="error">Error</option>
+                        <option value="renew">Renew</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sort By</label>
+                    <div class="sort-buttons">
+                        <button class="sort-btn active" data-sort="score">Score <span class="arrow">↓</span></button>
+                        <button class="sort-btn" data-sort="date">Date <span class="arrow">↓</span></button>
+                        <button class="sort-btn" data-sort="emodji">Reactions <span class="arrow">↓</span></button>
+                    </div>
+                </div>
+            </div>
+            <div class="tags-section">
+                <label>Exclude Tags (click to toggle)</label>
+                <div class="tags-container" id="tagsContainer">
+                    <span class="loading">Loading tags</span>
+                </div>
+            </div>
+            <div class="filters-row" style="margin-top: 15px;">
+                <div class="filter-group">
+                    <label>Discussed</label>
+                    <select id="discussedFilter">
+                        <option value="hide" selected>Hide discussed</option>
+                        <option value="all">All</option>
+                        <option value="only">Discussed only</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Bot Reaction</label>
+                    <select id="botReactionFilter">
+                        <option value="all" selected>All</option>
+                        <option value="liked">Liked only</option>
+                        <option value="disliked">Disliked only</option>
+                        <option value="none">No reaction</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Per page</label>
+                    <select id="pageSize">
+                        <option value="10">10</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="500">500</option>
+                    </select>
+                </div>
+                <div class="refresh-controls">
+                    <label>Auto-refresh (sec):</label>
+                    <input type="number" id="refreshInterval" value="30" min="5" max="300">
+                    <button class="refresh-btn" id="refreshBtn">Refresh</button>
+                    <a href="/api/download_db" class="download-db-link" title="Download database">Download DB</a>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <div class="view-toggle-container">
+            <div class="stats" id="stats">
+                <span class="stat-item"><span class="stat-label">Messages:</span> <span class="stat-value" id="statCount">-</span></span>
+                <span class="stat-item"><span class="stat-label">Reactions:</span> <span class="stat-value" id="statEmodji">-</span></span>
+                <span class="stat-item"><span class="stat-label">Avg:</span> <span class="stat-value" id="statAvg">-</span></span>
+            </div>
+            <div class="pagination" id="pagination"></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <input type="text" id="searchInput" placeholder="Search..." style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:0.85rem;width:160px;">
+                <button class="view-toggle-btn" id="viewToggleBtn" title="Switch to table view">Table</button>
+            </div>
+        </div>
+
+        <div class="message-list" id="messageList">
+            <div class="loading">Loading messages</div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let allTags = [];
+        let excludedTags = new Set();
+        let currentSort = 'score';
+        let sortOrder = 'desc';
+        let isOnAir = false;
+        let autoRefreshTimer = null;
+        let isTableView = false;
+        let allMessages = [];
+        let searchQuery = '';
+        let currentPage = 1;
+
+        // DOM Elements
+        const fromDateEl = document.getElementById('fromDate');
+        const toDateEl = document.getElementById('toDate');
+        const statusEl = document.getElementById('status');
+        const tagsContainer = document.getElementById('tagsContainer');
+        const messageList = document.getElementById('messageList');
+        const sortButtons = document.querySelectorAll('.sort-btn');
+        const onAirBtn = document.getElementById('onAirBtn');
+        const discussedFilterEl = document.getElementById('discussedFilter');
+        const botReactionFilterEl = document.getElementById('botReactionFilter');
+        const refreshIntervalEl = document.getElementById('refreshInterval');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const pageSizeEl = document.getElementById('pageSize');
+        const paginationEl = document.getElementById('pagination');
+        const filtersEl = document.querySelector('.filters');
+        const filtersHeader = document.getElementById('filtersHeader');
+        const viewToggleBtn = document.getElementById('viewToggleBtn');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date to Monday of last week
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ...
+            const daysToLastMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // days since this Monday
+            const lastMonday = new Date(today);
+            lastMonday.setDate(today.getDate() - daysToLastMonday - 7); // go back to last week's Monday
+            fromDateEl.value = lastMonday.toISOString().split('T')[0];
+
+            // Filters toggle
+            filtersHeader.addEventListener('click', function() {
+                filtersEl.classList.toggle('collapsed');
+            });
+
+            // Event listeners
+            fromDateEl.addEventListener('change', fetchMessages);
+            toDateEl.addEventListener('change', fetchMessages);
+            statusEl.addEventListener('change', fetchMessages);
+            discussedFilterEl.addEventListener('change', fetchMessages);
+            botReactionFilterEl.addEventListener('change', fetchMessages);
+            pageSizeEl.addEventListener('change', () => { currentPage = 1; renderFiltered(); });
+            refreshBtn.addEventListener('click', () => fetchMessages(true));
+
+            // On Air button
+            onAirBtn.addEventListener('click', toggleOnAir);
+
+            // View toggle button
+            viewToggleBtn.addEventListener('click', toggleView);
+
+            // Search input
+            document.getElementById('searchInput').addEventListener('input', function() {
+                searchQuery = this.value.toLowerCase().trim();
+                currentPage = 1;
+                renderFiltered();
+            });
+
+            // Refresh interval change
+            refreshIntervalEl.addEventListener('change', function() {
+                if (isOnAir) {
+                    startAutoRefresh();
+                }
+            });
+
+            sortButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const newSort = this.dataset.sort;
+                    if (currentSort === newSort) {
+                        sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+                    } else {
+                        currentSort = newSort;
+                        sortOrder = 'desc';
+                    }
+                    updateSortButtons();
+                    fetchMessages();
+                });
+            });
+
+            fetchMessages();
+        });
+
+        function toggleOnAir() {
+            isOnAir = !isOnAir;
+            onAirBtn.classList.toggle('active', isOnAir);
+            onAirBtn.textContent = isOnAir ? 'ON AIR' : 'ON AIR';
+
+            if (isOnAir) {
+                // In On Air mode: always hide discussed
+                discussedFilterEl.value = 'hide';
+                discussedFilterEl.disabled = true;
+                startAutoRefresh();
+            } else {
+                discussedFilterEl.disabled = false;
+                stopAutoRefresh();
+            }
+            fetchMessages();
+        }
+
+        function toggleView() {
+            isTableView = !isTableView;
+            viewToggleBtn.classList.toggle('active', isTableView);
+            viewToggleBtn.textContent = isTableView ? 'Cards' : 'Table';
+            renderFiltered();
+        }
+
+        function startAutoRefresh() {
+            stopAutoRefresh();
+            const interval = parseInt(refreshIntervalEl.value) * 1000;
+            if (interval >= 5000) {
+                autoRefreshTimer = setInterval(() => fetchMessages(true), interval);
+            }
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+            }
+        }
+
+        function updateSortButtons() {
+            sortButtons.forEach(btn => {
+                const isActive = btn.dataset.sort === currentSort;
+                btn.classList.toggle('active', isActive);
+                const arrow = btn.querySelector('.arrow');
+                if (isActive) {
+                    arrow.textContent = sortOrder === 'desc' ? '↓' : '↑';
+                } else {
+                    arrow.textContent = '↓';
+                }
+            });
+        }
+
+        async function fetchMessages(preserveScroll = false) {
+            // Save scroll position and visible message ID before refresh
+            let savedScrollY = window.scrollY;
+            let visibleMessageId = null;
+
+            if (preserveScroll) {
+                // Find the first visible message card
+                const cards = document.querySelectorAll('.message-card');
+                for (const card of cards) {
+                    const rect = card.getBoundingClientRect();
+                    if (rect.top >= 0 && rect.top < window.innerHeight) {
+                        visibleMessageId = card.dataset.id;
+                        break;
+                    }
+                }
+            }
+
+            messageList.innerHTML = '<div class="loading">Loading messages</div>';
+
+            const params = new URLSearchParams();
+            if (fromDateEl.value) params.set('from_date', fromDateEl.value + 'T00:00:00');
+            if (toDateEl.value) params.set('to_date', toDateEl.value + 'T23:59:59');
+            if (statusEl.value) params.set('status', statusEl.value);
+            if (excludedTags.size > 0) params.set('exclude_tags', Array.from(excludedTags).join(','));
+            params.set('sort_by', currentSort);
+            params.set('sort_order', sortOrder);
+
+            // Discussed filter
+            const discussedValue = discussedFilterEl.value;
+            if (discussedValue === 'hide') {
+                params.set('hide_discussed', 'true');
+            } else if (discussedValue === 'only') {
+                params.set('discussed_only', 'true');
+            }
+
+            // Bot reaction filter
+            const botReactionValue = botReactionFilterEl.value;
+            if (botReactionValue !== 'all') {
+                params.set('bot_reaction', botReactionValue);
+            }
+
+            try {
+                const response = await fetch('/api/messages?' + params.toString());
+                const data = await response.json();
+
+                // Update tags
+                if (data.all_tags && data.all_tags.length > 0) {
+                    allTags = data.all_tags;
+                    renderTags();
+                }
+
+                // Update stats
+                document.getElementById('statCount').textContent = data.stats.total_count;
+                document.getElementById('statEmodji').textContent = data.stats.total_emodji;
+                document.getElementById('statAvg').textContent = data.stats.avg_normalized;
+
+                // Store messages with original rank
+                allMessages = data.messages.map((msg, idx) => ({ ...msg, _rank: idx + 1 }));
+                if (!preserveScroll) currentPage = 1;
+                renderFiltered();
+
+                // Restore scroll position
+                if (preserveScroll) {
+                    if (visibleMessageId) {
+                        // Try to scroll to the same message
+                        const targetCard = document.querySelector(`.message-card[data-id="${visibleMessageId}"]`);
+                        if (targetCard) {
+                            targetCard.scrollIntoView({ block: 'start' });
+                        } else {
+                            // Message was removed (e.g., marked as discussed), use saved scroll
+                            window.scrollTo(0, savedScrollY);
+                        }
+                    } else {
+                        window.scrollTo(0, savedScrollY);
+                    }
+                }
+            } catch (error) {
+                messageList.innerHTML = '<div class="no-messages">Error loading messages</div>';
+                console.error('Error:', error);
+            }
+        }
+
+        async function markAsDiscussed(messageId, btn) {
+            btn.disabled = true;
+            btn.textContent = 'Marking...';
+
+            try {
+                const response = await fetch('/api/mark_discussed/' + messageId, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    // Remove the message card from view
+                    const card = btn.closest('.message-card');
+                    card.style.opacity = '0.5';
+                    card.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        card.remove();
+                        // Update stats count
+                        const countEl = document.getElementById('statCount');
+                        countEl.textContent = parseInt(countEl.textContent) - 1;
+                    }, 300);
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Discussed';
+                    alert('Error marking as discussed');
+                }
+            } catch (error) {
+                btn.disabled = false;
+                btn.textContent = 'Discussed';
+                console.error('Error:', error);
+                alert('Error marking as discussed');
+            }
+        }
+
+        function renderFiltered() {
+            let filtered = allMessages;
+            if (searchQuery) {
+                filtered = allMessages.filter(msg => {
+                    const text = (msg.text || '').toLowerCase();
+                    const headline = (msg.headline || '').toLowerCase();
+                    return text.includes(searchQuery) || headline.includes(searchQuery);
+                });
+            }
+
+            const pageSize = parseInt(pageSizeEl.value);
+            const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * pageSize;
+            const pageMessages = filtered.slice(start, start + pageSize);
+
+            if (isTableView) {
+                renderMessagesTable(pageMessages);
+            } else {
+                renderMessages(pageMessages);
+            }
+            renderPagination(filtered.length, totalPages);
+        }
+
+        function renderPagination(totalItems, totalPages) {
+            if (totalPages <= 1) {
+                paginationEl.innerHTML = '';
+                return;
+            }
+
+            let html = `<button ${currentPage <= 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">&laquo;</button>`;
+
+            // Show pages: first, last, current, and neighbors
+            const pages = new Set();
+            pages.add(1);
+            pages.add(totalPages);
+            for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                pages.add(i);
+            }
+            const sorted = [...pages].sort((a, b) => a - b);
+            let prev = 0;
+            for (const p of sorted) {
+                if (p - prev > 1) html += `<span class="page-info">...</span>`;
+                html += `<button class="${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+                prev = p;
+            }
+
+            html += `<button ${currentPage >= totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">&raquo;</button>`;
+            html += `<span class="page-info">${totalItems} messages</span>`;
+            paginationEl.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderFiltered();
+            window.scrollTo(0, 0);
+        }
+
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            allTags.forEach(tag => {
+                const chip = document.createElement('span');
+                chip.className = 'tag-chip' + (excludedTags.has(tag) ? ' excluded' : '');
+                chip.textContent = '#' + tag;
+                chip.addEventListener('click', function() {
+                    if (excludedTags.has(tag)) {
+                        excludedTags.delete(tag);
+                        chip.classList.remove('excluded');
+                    } else {
+                        excludedTags.add(tag);
+                        chip.classList.add('excluded');
+                    }
+                    fetchMessages();
+                });
+                tagsContainer.appendChild(chip);
+            });
+        }
+
+        function renderMessagesTable(messages) {
+            if (!messages || messages.length === 0) {
+                messageList.innerHTML = '<div class="no-messages">No messages found</div>';
+                return;
+            }
+
+            const tableHtml = `
+                <table class="messages-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Score</th>
+                            <th>ML</th>
+                            <th>Reactions</th>
+                            <th>Headline</th>
+                            <th>Tags</th>
+                            <th>Date</th>
+                            <th></th>
+                            ${isOnAir ? '<th>Action</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${messages.map((msg) => `
+                            <tr class="${msg.sent_air ? 'discussed' : ''}" data-id="${msg.id}">
+                                <td class="compact"><span class="rank ${msg._rank <= 3 ? 'top-3' : ''}">${msg._rank}</span></td>
+                                <td class="compact"><span class="score">${msg.normalized_score}</span></td>
+                                <td class="compact">${msg.bot_reaction ? `<span title="ML: ${msg.prediction_score}">${msg.bot_reaction}</span>` : (msg.prediction_score != null ? `<span class="ml-score" title="ML score">${msg.prediction_score}</span>` : '')}</td>
+                                <td class="compact"><span class="reactions">${msg.emodji_count}</span></td>
+                                <td class="headline" title="${msg.headline || ''}">${msg.headline || '-'}</td>
+                                <td class="compact">
+                                    <div class="tags">
+                                        ${(msg.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+                                    </div>
+                                </td>
+                                <td class="compact">${msg.message_dttm_formatted}</td>
+                                <td class="compact">
+                                    <button class="expand-text-btn" onclick="toggleTableRow('${msg.id}')">+</button>
+                                </td>
+                                ${isOnAir ? `
+                                    <td>
+                                        ${!msg.sent_air ? `<button class="discussed-btn-small" onclick="markAsDiscussedTable('${msg.id}', this)">Discussed</button>` : `<span style="color:#e57373;font-size:0.7rem">${msg.sent_air}</span>`}
+                                    </td>
+                                ` : ''}
+                            </tr>
+                            <tr class="text-row hidden" id="text-row-${msg.id}">
+                                <td colspan="${isOnAir ? '9' : '8'}">
+                                    <div class="table-text-content">${msg.text}</div>
+                                    ${msg.telegram_id ? `<a href="https://t.me/${msg.channel_link}/${msg.telegram_id}" target="_blank" class="link" style="display:inline-block;margin-top:10px;">Open in Telegram &rarr;</a>` : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            messageList.innerHTML = tableHtml;
+        }
+
+        function toggleTableRow(msgId) {
+            const textRow = document.getElementById('text-row-' + msgId);
+            const btn = document.querySelector(`tr[data-id="${msgId}"] .expand-text-btn`);
+            if (textRow) {
+                textRow.classList.toggle('hidden');
+                if (btn) {
+                    btn.textContent = textRow.classList.contains('hidden') ? '+' : '−';
+                    btn.classList.toggle('expanded', !textRow.classList.contains('hidden'));
+                }
+            }
+        }
+
+        async function markAsDiscussedTable(messageId, btn) {
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            try {
+                const response = await fetch('/api/mark_discussed/' + messageId, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const row = btn.closest('tr');
+                    row.style.opacity = '0.5';
+                    row.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        row.remove();
+                        const countEl = document.getElementById('statCount');
+                        countEl.textContent = parseInt(countEl.textContent) - 1;
+                    }, 300);
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Discussed';
+                    alert('Error marking as discussed');
+                }
+            } catch (error) {
+                btn.disabled = false;
+                btn.textContent = 'Discussed';
+                console.error('Error:', error);
+                alert('Error marking as discussed');
+            }
+        }
+
+        function renderMessages(messages) {
+            if (!messages || messages.length === 0) {
+                messageList.innerHTML = '<div class="no-messages">No messages found</div>';
+                return;
+            }
+
+            messageList.innerHTML = messages.map((msg) => `
+                <div class="message-card${msg.sent_air ? ' discussed' : ''}" data-id="${msg.id}">
+                    <div class="message-header">
+                        <span class="message-rank ${msg._rank <= 3 ? 'top-3' : ''}">#${msg._rank}</span>
+                        <div class="message-meta">
+                            <span class="normalized-score" title="Normalized score">${msg.normalized_score}</span>
+                            <span class="emodji-count">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                ${msg.emodji_count}
+                            </span>
+                            <span class="message-date" title="Message date">${msg.message_dttm_formatted}</span>
+                            <span class="message-date sent" title="Sent date">${msg.sent_at_formatted}</span>
+                            <span class="message-state ${msg.state}">${msg.state}</span>
+                            ${msg.bot_reaction ? `<span class="bot-reaction" title="ML: ${msg.prediction_score}">${msg.bot_reaction}</span>` : (msg.prediction_score != null ? `<span class="ml-score" title="ML score">${msg.prediction_score}</span>` : '')}
+                            ${msg.sent_air ? `<span class="discussed-badge">Discussed ${msg.sent_air}</span>` : ''}
+                        </div>
+                    </div>
+                    ${msg.tags && msg.tags.length > 0 ? `
+                        <div class="message-tags">
+                            ${msg.tags.map(t => `<span class="message-tag">#${t}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                    <div class="message-text" id="text-${msg._rank}">${msg.text}</div>
+                    <button class="expand-btn" id="btn-${msg._rank}" onclick="toggleExpand(${msg._rank})">Show more</button>
+                    <div class="message-footer">
+                        ${msg.telegram_id ? `
+                            <a href="https://t.me/${msg.channel_link}/${msg.telegram_id}" target="_blank" class="message-link">Open in Telegram &rarr;</a>
+                        ` : ''}
+                        ${isOnAir && !msg.sent_air ? `
+                            <button class="discussed-btn" onclick="markAsDiscussed('${msg.id}', this)">Discussed</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Check for overflow and show expand buttons
+            setTimeout(() => {
+                document.querySelectorAll('.message-text').forEach((el) => {
+                    const id = el.id.replace('text-', '');
+                    if (el.scrollHeight > 200) {
+                        document.getElementById('btn-' + id).classList.add('visible');
+                    }
+                });
+            }, 0);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function toggleExpand(idx) {
+            const text = document.getElementById('text-' + idx);
+            const btn = document.getElementById('btn-' + idx);
+            if (text.classList.contains('expanded')) {
+                text.classList.remove('expanded');
+                btn.textContent = 'Show more';
+            } else {
+                text.classList.add('expanded');
+                btn.textContent = 'Show less';
+            }
+        }
+
+        // Cron control functions
+        async function fetchCronStatus() {
+            try {
+                const response = await fetch('/cron_status');
+                const data = await response.json();
+                updateCronUI(data);
+            } catch (error) {
+                console.error('Error fetching cron status:', error);
+            }
+        }
+
+        function updateCronUI(data) {
+            const indicator = document.getElementById('cronIndicator');
+            const lastRunEl = document.getElementById('cronLastRun');
+            const funnelEl = document.getElementById('cronFunnel');
+            const stepEl = document.getElementById('cronStep');
+            const startBtn = document.getElementById('cronStartBtn');
+            const stopBtn = document.getElementById('cronStopBtn');
+
+            const isRunning = data.running || data.started_at;
+
+            indicator.classList.toggle('running', isRunning);
+
+            // Update current step
+            stepEl.textContent = data.current_step || 'Idle';
+            stepEl.style.color = data.current_step ? '#4fc3f7' : '#888';
+
+            if (data.last_run) {
+                const dt = new Date(data.last_run);
+                lastRunEl.textContent = dt.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            } else {
+                lastRunEl.textContent = '-';
+            }
+
+            funnelEl.textContent = data.funnel || '- / - / -';
+
+            startBtn.disabled = isRunning;
+            stopBtn.disabled = !isRunning;
+
+            const intervalInput = document.getElementById('cronIntervalInput');
+            intervalInput.disabled = isRunning;
+
+            // Set interval value from server if running
+            if (isRunning && data.interval) {
+                intervalInput.value = data.interval;
+            }
+        }
+
+        async function startCron() {
+            const intervalInput = document.getElementById('cronIntervalInput');
+            const interval = parseFloat(intervalInput.value) || 10;
+
+            try {
+                const response = await fetch('/start_cron', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ interval: interval })
+                });
+
+                if (response.ok) {
+                    fetchCronStatus();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.detail || 'Failed to start cron'));
+                }
+            } catch (error) {
+                console.error('Error starting cron:', error);
+                alert('Error starting cron');
+            }
+        }
+
+        async function stopCron() {
+            try {
+                const response = await fetch('/stop_cron', { method: 'POST' });
+
+                if (response.ok) {
+                    fetchCronStatus();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.detail || 'Failed to stop cron'));
+                }
+            } catch (error) {
+                console.error('Error stopping cron:', error);
+                alert('Error stopping cron');
+            }
+        }
+
+        // Fetch cron status on load and periodically
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchCronStatus();
+            setInterval(fetchCronStatus, 10000); // Update every 10 seconds
+        });
+    </script>
+</body>
+</html>
